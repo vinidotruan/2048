@@ -49,16 +49,14 @@ func (g *Game) GenerateNewSquare() {
 		y := randRange(0 ,4) * tileHeight
 
 		for i := 0; i < len(g.Squares); i++ {
-			if x == int32(g.Squares[i].Position.X) ||
-			y == int32(g.Squares[i].Position.Y) {
 
-				g.GenerateNewSquare()
-			} else {
-
-				g.NewSquare(x, y)
-				return
+			if x == int32(g.Squares[i].Position.X) || y == int32(g.Squares[i].Position.Y) {
+				x = randRange(0, 4) * tileWidth
+				y = randRange(0 ,4) * tileHeight
+				i = 0
 			}
 		}
+		g.NewSquare(x, y)
 		return
 	}
 }
