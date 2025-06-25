@@ -15,8 +15,8 @@ const (
 	tileWidth  = height / 4
 	minimumX   = 0
 	minimumY   = 0
-	maximumX   = tileWidth
-	maximumY   = tileHeight
+	maximumX   = tileWidth * 3
+	maximumY   = tileHeight * 3
 )
 
 var (
@@ -87,6 +87,7 @@ func main() {
 
 	g.NewSquare(0, 200, 2, 40)
 	g.NewSquare(200, 200, 4, 60)
+	g.NewSquare(200, maximumY, 4, 80)
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 
@@ -120,33 +121,44 @@ func (g *Game) Update() {
 
 func (g *Game) MovimentHandle() {
 	if rl.IsKeyPressed(rl.KeyDown) {
+		sort.Slice(g.Squares, func(i, j int) bool {
+			return g.Squares[j].Position.Y < g.Squares[i].Position.Y
+		})
+
 		for i := 0; i < len(g.Squares); i++ {
-			maxValue := tileHeight * 3
-			coordinate := g.MovimentHandleCollision(&g.Squares[i], float32(maxValue), "y", "down")
+			coordinate := g.MovimentHandleCollision(&g.Squares[i], maximumY, "y", "down")
 			g.Squares[i].Position.Y = coordinate
 		}
 	}
 
 	if rl.IsKeyPressed(rl.KeyUp) {
+		sort.Slice(g.Squares, func(i, j int) bool {
+			return g.Squares[j].Position.Y > g.Squares[i].Position.Y
+		})
+
 		for i := 0; i < len(g.Squares); i++ {
-			maxValue := 0
-			coordinate := g.MovimentHandleCollision(&g.Squares[i], float32(maxValue), "y", "up")
+			coordinate := g.MovimentHandleCollision(&g.Squares[i], minimumY, "y", "up")
 			g.Squares[i].Position.Y = coordinate
 		}
 	}
 
 	if rl.IsKeyPressed(rl.KeyLeft) {
+		sort.Slice(g.Squares, func(i, j int) bool {
+			return g.Squares[j].Position.X > g.Squares[i].Position.X
+		})
 		for i := 0; i < len(g.Squares); i++ {
-			maxValue := 0
-			coordinate := g.MovimentHandleCollision(&g.Squares[i], float32(maxValue), "x", "left")
+			coordinate := g.MovimentHandleCollision(&g.Squares[i], minimumX, "x", "left")
 			g.Squares[i].Position.X = coordinate
 		}
 	}
 
 	if rl.IsKeyPressed(rl.KeyRight) {
+		sort.Slice(g.Squares, func(i, j int) bool {
+			return g.Squares[j].Position.X < g.Squares[i].Position.X
+		})
+
 		for i := 0; i < len(g.Squares); i++ {
-			maxValue := tileWidth * 3
-			coordinate := g.MovimentHandleCollision(&g.Squares[i], float32(maxValue), "x", "right")
+			coordinate := g.MovimentHandleCollision(&g.Squares[i], maximumX, "x", "right")
 			g.Squares[i].Position.X = coordinate
 		}
 	}
@@ -155,31 +167,24 @@ func (g *Game) MovimentHandle() {
 		rl.IsKeyPressed(rl.KeyDown) ||
 		rl.IsKeyPressed(rl.KeyLeft) ||
 		rl.IsKeyPressed(rl.KeyRight) {
-		// g.GenerateNewSquare()
+		//g.GenerateNewSquare()
 	}
 }
 
 func (g *Game) MovimentHandleCollision(s *Square, coordinateValue float32, coordinateName string, direction string) float32 {
 	switch coordinateName {
 	case "y":
-		if direction == "down" {
-			sort.Slice(g.Squares, func(i, j int) bool {
-				return g.Squares[j].Position.Y < g.Squares[i].Position.Y
-			})
-		} else {
-			sort.Slice(g.Squares, func(i, j int) bool {
-				return g.Squares[j].Position.Y > g.Squares[i].Position.Y
-			})
+		if s.Position.Y == maximumY && coordinateValue == maximumY || s.Position.Y == minimumY && coordinateValue == minimumY {
+			return coordinateValue
 		}
 
 		for i := 0; i < len(g.Squares); i++ {
-			// ja tem alguem e esse alguem nao sou eu
 			if g.Squares[i].Position.Y == coordinateValue &&
 				s.Position.X == g.Squares[i].Position.X {
-				// esse alguem tem o mesmo valor que eu
 				if s.Value == g.Squares[i].Value {
 					s.Value *= 2
 					g.Squares = append(g.Squares[:i], g.Squares[i+1:]...)
+
 					return coordinateValue
 				} else {
 					if direction == "down" {
@@ -194,30 +199,13 @@ func (g *Game) MovimentHandleCollision(s *Square, coordinateValue float32, coord
 			}
 		}
 	case "x":
-		fmt.Printf("\nsquare position: %f \ncoordinate value: %f", s.Position.X, coordinateValue)
-		if s.Position.X == coordinateValue && (coordinateValue == maximumX || coordinateValue == minimumX) {
+		if s.Position.X == maximumX && coordinateValue == maximumX || s.Position.X == minimumX && coordinateValue == minimumX {
 			return coordinateValue
 		}
 
-		if direction == "right" {
-			sort.Slice(g.Squares, func(i, j int) bool {
-				return g.Squares[j].Position.X < g.Squares[i].Position.X
-			})
-		} else {
-			sort.Slice(g.Squares, func(i, j int) bool {
-				return g.Squares[j].Position.X > g.Squares[i].Position.X
-			})
-		}
-
 		for i := 0; i < len(g.Squares); i++ {
-
-			// ja tem alguem e esse alguem nao sou eu
-			if g.Squares[i].Position.X == coordinateValue && s.Position.Y == g.Squares[i].Position.Y {
-				fmt.Println("Tem alguem e nao sou eu")
-
-				// esse alguem tem o mesmo valor que eu
+			if g.Squares[i].Position.X == coordinateValue && s.Position.Y == g.Squares[i].Position.Y && s.Position.X != g.Squares[i].Position.X {
 				if s.Value == g.Squares[i].Value {
-					fmt.Println("O valor eh o mesmo")
 					s.Value *= 2
 					g.Squares = append(g.Squares[:i], g.Squares[i+1:]...)
 
